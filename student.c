@@ -13,12 +13,41 @@
     float avg;
  };
 
- void students(struct st *p)
+ void students(struct st *p,struct st *s,int num)
  {    
         printf("\nEnter the roll number:");
-        scanf("%d",&p->roll);
-        printf("Eter the name:");
+       // scanf("%d",&p->roll);
+        if(scanf("%d",&p->roll)!=1 || p->roll<=0 || p->roll>100)
+        {
+            printf("\nEnter actual numbers!!\n");
+            p->roll=-1;
+            while (getchar() != '\n'); 
+            return;
+        }
+
+        for(int i=0;i<num;i++)
+        {
+            if(s[i].roll==p->roll)
+            {
+            printf("\nstudent with this roll number is already present!!\n");
+            p->roll=-1;
+            return;
+            
+            }
+        }
+        printf("Enter the name:");
         scanf("%s",p->name);
+                for(int i=0;i<num;i++)
+        {
+            if(strcmp(s[i].name,p->name)==0)
+            {
+            printf("\nstudent with this name  is already present!!\n");
+            strcpy(p->name,"x");
+            return;
+            
+            }
+        }
+        
         printf("Enter subject1 marks:");
         scanf("%f",&p->subject1);
         printf("Enter subject2 marks:");
@@ -131,20 +160,25 @@ int numberOfStudentsPassed(struct st *p,int num)
     printf("Enter the number of students:");
     scanf("%d",&numberOfstudents);
 
-    struct st *p;
+    struct st *p,*s;
     int i;
     p=malloc(sizeof(struct st )*numberOfstudents);
 
     for(i=0;i<numberOfstudents;i++)
     {
         printf("Enter the details of student:%d",i+1);
-        students(&p[i]);
+        students(&p[i],p,i);
+
+        if(p[i].roll==-1)
+        i--;
+        if(strcmp(p[i].name,"x")==0)
+        i--;
     }
     int options;
     while(1)
     {
-    printf("\n1-Student Details\n2-Add new student\n3-Class Average\n4-Pass Percentage\n5-Export\n6-Find students\n7-Number of students passed\n8-Exit");
-    printf("\nEnter the option:");
+    printf("\n\n1-Student Details\n2-Add new student\n3-Class Average\n4-Pass Percentage\n5-Export\n6-Find students\n7-Number of students passed\n8-Exit");
+    printf("\n\nEnter the option:");
     scanf("%d",&options);   
 
     switch(options)
@@ -163,8 +197,15 @@ int numberOfStudentsPassed(struct st *p,int num)
                     numberOfstudents=numberOfstudents+1;
                     p=realloc(p,sizeof(struct st)*numberOfstudents);
                     printf("Enter the details of New students:");
-                    students(&p[numberOfstudents-1]);
-                break;
+                    students(&p[numberOfstudents-1],p,numberOfstudents-1);
+                    if(p[numberOfstudents-1].roll==-1)
+                    {
+                        numberOfstudents--;
+                    }
+                    if(strcmp(p[numberOfstudents-1].name,"x")==0)
+                    numberOfstudents--;
+
+                    break;
                 }       
         case 3: {float classAverage;
                     classAverage=classaverage(p,numberOfstudents);
