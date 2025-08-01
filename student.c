@@ -19,7 +19,7 @@
        // scanf("%d",&p->roll);
         if(scanf("%d",&p->roll)!=1 || p->roll<=0 || p->roll>100)
         {
-            printf("\nEnter actual numbers!!\n");
+            printf("\nEnter actual numbers!!\n\n");
             p->roll=-1;
             while (getchar() != '\n'); 
             return;
@@ -37,7 +37,8 @@
         }
         printf("Enter the name:");
         scanf("%s",p->name);
-                for(int i=0;i<num;i++)
+        
+        for(int i=0;i<num;i++)
         {
             if(strcmp(s[i].name,p->name)==0)
             {
@@ -49,11 +50,33 @@
         }
         
         printf("Enter subject1 marks:");
-        scanf("%f",&p->subject1);
+        //scanf("%f",&p->subject1);
+         if(scanf("%f",&p->subject1)!=1 || p->subject1<=0 || p->subject1>101)
+        {
+            printf("\nEnter actual numbers!! or between 1-100\n");
+            p->subject1=-1;
+            while (getchar() != '\n'); 
+            return;
+        }
+        
         printf("Enter subject2 marks:");
-        scanf("%f",&p->subject2);
+       // scanf("%f",&p->subject2);
+        if(scanf("%f",&p->subject2)!=1 || p->subject2<=0 || p->subject2>101)
+        {
+            printf("\nEnter actual numbers!! or between 1-100\n");
+            p->subject2=-1;
+            while (getchar() != '\n'); 
+            return;
+        }
         printf("Enter subject3 marks:");
-        scanf("%f",&p->subject3);
+        //scanf("%f",&p->subject3);
+        if(scanf("%f",&p->subject3)!=1 || p->subject3<=0 || p->subject3>101)
+        {
+            printf("\nEnter actual numbers!! or between 1-100\n");
+            p->subject3=-1;
+            while (getchar() != '\n'); 
+            return;
+        }
 
         p->sum=p->subject1+p->subject2+p->subject3;
         p->avg=p->sum/3;
@@ -158,7 +181,17 @@ int numberOfStudentsPassed(struct st *p,int num)
  {
     int numberOfstudents;
     printf("Enter the number of students:");
-    scanf("%d",&numberOfstudents);
+    //scanf("%d",&numberOfstudents);
+    l:
+    if(scanf("%d",&numberOfstudents)!=1 || numberOfstudents<=0 || numberOfstudents>100)
+        {
+            printf("\nEnter actual numbers!!\nNumber of students");
+            numberOfstudents=-1;
+            while (getchar() != '\n'); 
+            goto l;
+        }
+    
+    
 
     struct st *p,*s;
     int i;
@@ -172,6 +205,12 @@ int numberOfStudentsPassed(struct st *p,int num)
         if(p[i].roll==-1)
         i--;
         if(strcmp(p[i].name,"x")==0)
+        i--;
+        if(p[i].subject1==-1)
+        i--;
+        if(p[i].subject2==-1)
+        i--;
+        if(p[i].subject2==-1)
         i--;
     }
     int options;
