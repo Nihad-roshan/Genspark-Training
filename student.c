@@ -216,9 +216,19 @@ int numberOfStudentsPassed(struct st *p,int num)
     int options;
     while(1)
     {
+    ll:
     printf("\n\n1-Student Details\n2-Add new student\n3-Class Average\n4-Pass Percentage\n5-Export\n6-Find students\n7-Number of students passed\n8-Exit");
     printf("\n\nEnter the option:");
-    scanf("%d",&options);   
+    //scanf("%d",&options);
+    if(scanf("%d",&options)!=1 || options<=0 || options>100)
+        {
+            printf("\nEnter actual numbers!!\n");
+           // options=-1;
+            while (getchar() != '\n'); 
+            goto ll;
+        }
+    
+
 
     switch(options)
     {
