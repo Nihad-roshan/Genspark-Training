@@ -118,13 +118,36 @@ void *detailsofmemoryid(int id)
     return NULL;
 }
 
+void exportmemory()
+{
+    FILE *fp=fopen("memoryfile.txt","w");
+    struct m *temp=head;
+    if(fp==NULL)
+    {
+        printf("can't open file..\n");
+        return;
+    }
+    if(temp==NULL)
+    {
+        printf("No memory is allocated yet!\n");
+        return;
+    }
+    while(temp!=NULL){
+
+    fprintf(fp,"memoryid=%d | address=%p | size=%d | Type=%s\n",temp->memoryid,temp->address,temp->size,temp->type);
+    temp=temp->next;
+    }
+    fclose(fp);
+    printf("momeory log is exported into file!\n");
+}
+
 int main()
 {
     int options;
     l1:
     while(1)
     {
-    printf("1-Allocate memory\n2-Display Memory log\n3-Free Memory\n4-Exit\n");
+    printf("1-Allocate memory\n2-Display Memory log\n3-Free Memory\n4-Export to file\n5-Exit\n");
     printf("Enter any options:");
     if(scanf("%d",&options)!=1 ||options<=0 ||options>4)
     {
@@ -260,6 +283,11 @@ int main()
         break;
         }
         case 4:
+        {
+                exportmemory();
+                break;
+        }
+        case 5:
         {
             printf("Exiting..\n");
             struct m *temp=head;
