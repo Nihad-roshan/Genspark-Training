@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <errno.h>
+#include <string.h>
 
 ssize_t read_all(int fd, void *buf, size_t count) 
 {
@@ -131,3 +134,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
