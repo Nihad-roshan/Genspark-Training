@@ -32,7 +32,7 @@ static size_t get_os_page_size(void)
     return (size_t)page_size;
 }
 
-//map_shared
+
 static uint8_t *map_file_shared(int fd, size_t length)
 {
     void *address = mmap(NULL, length, PROT_READ, MAP_SHARED, fd, 0);
@@ -116,3 +116,4 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
