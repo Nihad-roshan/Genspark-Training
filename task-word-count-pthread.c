@@ -30,11 +30,11 @@ static pthread_cond_t q_not_full = PTHREAD_COND_INITIALIZER;
 static int next_request_id = 1;
 static pthread_mutex_t id_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// Global word count
+
 static long global_word_count = 0;
 static pthread_mutex_t count_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-// -------- Queue Operations ----------
+// Queue Operations
 static void enqueue(request_t request)
 {
     pthread_mutex_lock(&q_mutex);
@@ -71,7 +71,7 @@ static request_t dequeue(void)
     return request;
 }
 
-// -------- Worker Thread (Consumers) ----------
+// Worker Thread (Consumers)
 static void *worker_thread(void *arg)
 {
     int worker_id = *(int *)arg;
@@ -115,7 +115,7 @@ static void *worker_thread(void *arg)
     return NULL;
 }
 
-// -------- File Splitter (Producer) ----------
+//File Splitter (Producer)
 static void split_file_into_chunks(const char *filename)
 {
     FILE *fp = fopen(filename, "r");
@@ -193,3 +193,4 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
