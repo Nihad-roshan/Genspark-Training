@@ -3,10 +3,9 @@
 #include <string.h>
 #include <pthread.h>
 
-#define TABLE_SIZE 8  // number of buckets
-#define NUM_THREADS 4 // example thread count
+#define TABLE_SIZE 8  // no.buckets
+#define NUM_THREADS 4 // thread count
 
-// Node in linked list for each bucket
 typedef struct Node
 {
     char *key;
@@ -14,14 +13,12 @@ typedef struct Node
     struct Node *next;
 } Node;
 
-// Hash map structure
 typedef struct
 {
     Node *buckets[TABLE_SIZE];
     pthread_mutex_t locks[TABLE_SIZE]; // one lock per bucket
 } hashmap;
 
-// Hash function (djb2 algorithm)
 unsigned long hash(const char *str)
 {
     unsigned long hash = 5381;
@@ -33,7 +30,6 @@ unsigned long hash(const char *str)
     return hash % TABLE_SIZE;
 }
 
-// Initialize hash map
 void hashmap_init(hashmap *map)
 {
     for (int i = 0; i < TABLE_SIZE; i++)
@@ -43,7 +39,6 @@ void hashmap_init(hashmap *map)
     }
 }
 
-// Insert key–value into hash map (thread-safe)
 void hashmap_insert(hashmap *map, const char *key, int value)
 {
     unsigned long index = hash(key);
@@ -61,7 +56,6 @@ void hashmap_insert(hashmap *map, const char *key, int value)
         node = node->next;
     }
 
-    // Insert new node at head
     Node *new_node = malloc(sizeof(Node));
     new_node->key = strdup(key);
     new_node->value = value;
@@ -71,7 +65,6 @@ void hashmap_insert(hashmap *map, const char *key, int value)
     pthread_mutex_unlock(&map->locks[index]); // unlock bucket
 }
 
-// Lookup key in hash map (thread-safe)
 int hashmap_lookup(hashmap *map, const char *key, int *found)
 {
     unsigned long index = hash(key);
@@ -95,13 +88,12 @@ int hashmap_lookup(hashmap *map, const char *key, int *found)
     return -1;
 }
 
-// Example thread function
 void *worker(void *arg)
 {
     hashmap *map = (hashmap *)arg;
     char key[32];
 
-    // Insert some keys
+    // Inserting keys
     for (int i = 0; i < 5; i++)
     {
         sprintf(key, "key_%d", i);
@@ -109,7 +101,7 @@ void *worker(void *arg)
         printf("Thread %ld inserted: %s -> %d\n", pthread_self(), key, i * 100);
     }
 
-    // Lookup keys
+    // looking keys
     for (int i = 0; i < 5; i++)
     {
         sprintf(key, "key_%d", i);
@@ -131,13 +123,12 @@ int main()
 
     pthread_t threads[NUM_THREADS];
 
-    // Create threads
+
     for (int i = 0; i < NUM_THREADS; i++)
     {
         pthread_create(&threads[i], NULL, worker, &map);
     }
 
-    // Wait for threads
     for (int i = 0; i < NUM_THREADS; i++)
     {
         pthread_join(threads[i], NULL);
@@ -145,3 +136,4 @@ int main()
 
     return 0;
 }
+
