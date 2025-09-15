@@ -12,13 +12,13 @@
 #define BUFFER_SIZE 5
 #define NUM_PRODUCERS 2
 #define NUM_CONSUMERS 2
-#define ITEMS_TO_PRODUCE 10
+#define ITEMS_TO_PRODUCE 5
 
-// Shared buffer
+
 int buffer[BUFFER_SIZE];
 int in = 0, out = 0, count = 0;
 
-// Futex helpers
+
 static int futex_wait(atomic_int *addr, int expected)
 {
     return syscall(SYS_futex, addr, FUTEX_WAIT, expected, NULL, NULL, 0);
@@ -28,12 +28,12 @@ static int futex_wake(atomic_int *addr, int n)
     return syscall(SYS_futex, addr, FUTEX_WAKE, n, NULL, NULL, 0);
 }
 
-// Futex condition replacements
+
 atomic_int not_full = 0;  // tracks if producers should wait
 atomic_int not_empty = 0; // tracks if consumers should wait
 
-// Mutex for buffer protection
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;//for buffer
 
 void *producer(void *arg)
 {
@@ -55,7 +55,7 @@ void *producer(void *arg)
             pthread_mutex_lock(&mutex);
         }
 
-        // Put item
+
         buffer[in] = item;
         in = (in + 1) % BUFFER_SIZE;
         count++;
@@ -117,23 +117,23 @@ int main()
 {
     pthread_t producers[NUM_PRODUCERS];
     pthread_t consumers[NUM_CONSUMERS];
-    int ids[NUM_PRODUCERS > NUM_CONSUMERS ? NUM_PRODUCERS : NUM_CONSUMERS];
+    int ids[2];
 
-    // Create producers
+
     for (int i = 0; i < NUM_PRODUCERS; i++)
-    {
+    {//producers
         ids[i] = i;
         pthread_create(&producers[i], NULL, producer, &ids[i]);
     }
 
-    // Create consumers
+
     for (int i = 0; i < NUM_CONSUMERS; i++)
-    {
+    {//consumers
         ids[i] = i;
         pthread_create(&consumers[i], NULL, consumer, &ids[i]);
     }
 
-    // Wait for all
+
     for (int i = 0; i < NUM_PRODUCERS; i++)
     {
         pthread_join(producers[i], NULL);
@@ -145,3 +145,4 @@ int main()
 
     return 0;
 }
+
