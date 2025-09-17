@@ -1,6 +1,3 @@
-// kv_mvcc_simple.c
-// Simple in-memory KV store with transactions, per-key locking, deadlock detection,
-// and MVCC-style versioned reads. Intent: clarity over completeness.
 
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
@@ -17,24 +14,22 @@
 #define MAX_WRITES_PER_TX 8
 #define KEY_NAME_LEN 16
 
-// ---- MVCC Version ----
 typedef struct Version
-{
+{//MVCC
     char value[32];
-    unsigned long begin_ts; // inclusive
-    unsigned long end_ts;   // exclusive; ULONG_MAX => visible (not retired)
-    struct Version *next;   // newest-first
+    unsigned long begin_ts;
+    unsigned long end_ts;  
+    struct Version *next; 
 } Version;
 
-// ---- Key entry ----
+
 typedef struct
-{
+{//key-value
     char name[KEY_NAME_LEN];
     Version *versions; // newest-first
     int locked_by;     // -1 if free, otherwise tx id (simple single-writer lock)
 } KVPair;
 
-// ---- Transaction ----
 typedef enum
 {
     TX_UNUSED = 0,
@@ -46,21 +41,18 @@ typedef struct
 {
     int id;
     TxState state;
-    unsigned long start_ts; // snapshot timestamp
-    // simple write buffer: store key index + value
+    unsigned long start_ts; 
     int write_count;
     int write_keys[MAX_WRITES_PER_TX];
     char write_values[MAX_WRITES_PER_TX][32];
 } Transaction;
 
-// ---- Globals ----
 KVPair store[MAX_KEYS];
 Transaction txs[MAX_TRANSACTIONS];
-pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER; // protects global structures and timestamps
-int wait_for[MAX_TRANSACTIONS][MAX_TRANSACTIONS];        // deadlock wait-for graph (edge i->j means i waits for j)
-atomic_ulong global_ts = 1;                              // simple timestamp generator
+pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER;
+int wait_for[MAX_TRANSACTIONS][MAX_TRANSACTIONS];        
+atomic_ulong global_ts = 1;
 
-// ---- Helpers ----
 int find_key_index(const char *name)
 {
     for (int i = 0; i < MAX_KEYS; ++i)
@@ -97,9 +89,9 @@ void init_store(void)
     pthread_mutex_unlock(&global_lock);
 }
 
-// ---- Deadlock detection (DFS cycle on wait_for matrix) ----
+
 bool dfs_cycle(int u, int visited[], int recStack[])
-{
+{//deadlock-detection
     visited[u] = 1;
     recStack[u] = 1;
     for (int v = 0; v < MAX_TRANSACTIONS; ++v)
@@ -125,7 +117,6 @@ bool detect_deadlock()
     return false;
 }
 
-// ---- Transaction operations ----
 Transaction *begin_tx(int id)
 {
     pthread_mutex_lock(&global_lock);
@@ -147,10 +138,7 @@ Transaction *begin_tx(int id)
     return t;
 }
 
-// Try to acquire write lock for key. Returns:
-// 0 -> acquired
-// 1 -> blocked (added wait-for edge, no cycle detected)
-// -1 -> deadlock detected (caller should abort)
+// Try to acquire write lock for key. Returns 0 -> acquired | 1 -> blocked (added wait-for edge, no cycle detected)| -1 -> deadlock detected (caller should abort)
 int try_acquire_lock(Transaction *t, int kidx)
 {
     pthread_mutex_lock(&global_lock);
@@ -176,8 +164,6 @@ int try_acquire_lock(Transaction *t, int kidx)
     }
 }
 
-// Read: returns 0 on success, -1 on failure.
-// Implements read-your-writes: check write buffer first; otherwise, scan version list for visible version at tx->start_ts.
 int tx_read(Transaction *t, const char *kname, char *out_value, size_t out_len)
 {
     if (!t || t->state != TX_ACTIVE)
@@ -187,7 +173,7 @@ int tx_read(Transaction *t, const char *kname, char *out_value, size_t out_len)
         return -1;
 
     pthread_mutex_lock(&global_lock);
-    // check write buffer (read-your-writes)
+
     for (int i = 0; i < t->write_count; ++i)
     {
         if (t->write_keys[i] == kidx)
@@ -197,7 +183,7 @@ int tx_read(Transaction *t, const char *kname, char *out_value, size_t out_len)
             return 0;
         }
     }
-    // scan versions newest-first; pick version with begin_ts <= start_ts < end_ts
+
     Version *v = store[kidx].versions;
     while (v)
     {
@@ -213,8 +199,6 @@ int tx_read(Transaction *t, const char *kname, char *out_value, size_t out_len)
     return -1;
 }
 
-// Buffer a write in transaction. If key already in write buffer, overwrite value.
-// We also try to acquire lock right away to reduce conflicts at commit time.
 int tx_write(Transaction *t, const char *kname, const char *value)
 {
     if (!t || t->state != TX_ACTIVE)
@@ -226,10 +210,9 @@ int tx_write(Transaction *t, const char *kname, const char *value)
     int lock_res = try_acquire_lock(t, kidx);
     if (lock_res == -1)
     {
-        // deadlock detected; abort transaction
+
         printf("[TX%d] deadlock detected while locking %s -> aborting\n", t->id, kname);
         t->state = TX_ABORTED;
-        // clear wait edges and release locks held by this tx
         pthread_mutex_lock(&global_lock);
         for (int j = 0; j < MAX_TRANSACTIONS; ++j)
             wait_for[t->id][j] = wait_for[j][t->id] = 0;
@@ -241,14 +224,12 @@ int tx_write(Transaction *t, const char *kname, const char *value)
     }
     else if (lock_res == 1)
     {
-        // blocked but no deadlock -> for simplicity we fail the write (could wait/queue in a real system)
         printf("[TX%d] blocked acquiring lock on %s (owner=%d). Write not buffered.\n", t->id, kname, store[kidx].locked_by);
         return 1;
     }
 
-    // lock acquired: add or update write buffer
     pthread_mutex_lock(&global_lock);
-    // update existing buffered write if present
+
     for (int i = 0; i < t->write_count; ++i)
     {
         if (t->write_keys[i] == kidx)
@@ -259,7 +240,7 @@ int tx_write(Transaction *t, const char *kname, const char *value)
             return 0;
         }
     }
-    // append new
+
     if (t->write_count >= MAX_WRITES_PER_TX)
     {
         pthread_mutex_unlock(&global_lock);
@@ -274,18 +255,15 @@ int tx_write(Transaction *t, const char *kname, const char *value)
     return 0;
 }
 
-// Commit: assign commit_ts and create new versions for write-buffered keys.
-// Returns 0 on success, -1 on abort.
 int tx_commit(Transaction *t)
 {
     if (!t || t->state != TX_ACTIVE)
         return -1;
 
-    // For simplicity we assume locks already acquired during tx_write; in real DB you'd get locks here.
     unsigned long commit_ts = atomic_fetch_add(&global_ts, 1);
 
     pthread_mutex_lock(&global_lock);
-    // Apply writes: for each buffered write, create new version with begin_ts=commit_ts and old head end_ts=commit_ts
+
     for (int i = 0; i < t->write_count; ++i)
     {
         int kidx = t->write_keys[i];
@@ -300,11 +278,11 @@ int tx_commit(Transaction *t)
         newv->next = old;
         store[kidx].versions = newv;
     }
-    // release locks held by this tx
+
     for (int i = 0; i < MAX_KEYS; ++i)
         if (store[i].locked_by == t->id)
             store[i].locked_by = -1;
-    // clear wait_for edges (others waiting on me are irrelevant after commit)
+
     for (int j = 0; j < MAX_TRANSACTIONS; ++j)
         wait_for[t->id][j] = wait_for[j][t->id] = 0;
 
@@ -335,7 +313,6 @@ void tx_abort(Transaction *t)
     printf("[TX%d] aborted\n", t->id);
 }
 
-// Utility: print visible chain of each key
 void dump_store(void)
 {
     pthread_mutex_lock(&global_lock);
@@ -355,37 +332,31 @@ void dump_store(void)
     pthread_mutex_unlock(&global_lock);
 }
 
-// ---- Demo in main ----
+
 int main(void)
 {
     init_store();
     dump_store();
 
-    // Start two transactions to demo MVCC snapshot and deadlock
     Transaction *t0 = begin_tx(0);
     Transaction *t1 = begin_tx(1);
 
-    // t0 reads key0 (snapshot)
+
     char buf[32];
     tx_read(t0, "key0", buf, sizeof(buf));
     printf("[TX0] read key0 => %s (snapshot ts=%lu)\n", buf, t0->start_ts);
 
-    // t1 writes key0 and commits (concurrent writer)
     tx_write(t1, "key0", "value_from_t1");
     tx_commit(t1); // create new version at commit_ts
 
-    // t0 reads key0 again: should still see old value because of snapshot isolation (start_ts of t0)
     tx_read(t0, "key0", buf, sizeof(buf));
     printf("[TX0] read key0 again => %s (snapshot ts=%lu) -- should be unchanged by T1 commit\n", buf, t0->start_ts);
 
-    // t0 now writes key1 (acquires lock) and t1 writes key2 (acquires lock)
     tx_write(t0, "key1", "t0_writes_key1");
     tx_write(t1, "key2", "t1_writes_key2");
 
-    // create a deadlock scenario: t0 tries to write key2 (owned by t1), t1 tries to write key1 (owned by t0)
-    // t0 attempts to lock key2 -> will set wait_for[0][1]
+
     int r0 = tx_write(t0, "key2", "t0_try_key2");
-    // t1 attempts to lock key1 -> will set wait_for[1][0] => cycle detection triggers abort of the one that detects cycle
     int r1 = tx_write(t1, "key1", "t1_try_key1");
 
     // Check results
@@ -401,3 +372,4 @@ int main(void)
     dump_store();
     return 0;
 }
+
