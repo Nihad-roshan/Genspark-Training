@@ -27,7 +27,7 @@ typedef struct
 {//key-value
     char name[KEY_NAME_LEN];
     Version *versions; // newest-first
-    int locked_by;     // -1 if free, otherwise tx id (simple single-writer lock)
+    int locked_by;     // -1 if free
 } KVPair;
 
 typedef enum
@@ -91,7 +91,7 @@ void init_store(void)
 
 
 bool dfs_cycle(int u, int visited[], int recStack[])
-{//deadlock-detection
+{
     visited[u] = 1;
     recStack[u] = 1;
     for (int v = 0; v < MAX_TRANSACTIONS; ++v)
@@ -146,7 +146,7 @@ int try_acquire_lock(Transaction *t, int kidx)
     if (owner == -1 || owner == t->id)
     {
         store[kidx].locked_by = t->id;
-        // clear wait edges from this tx (it got what it wanted)
+
         for (int j = 0; j < MAX_TRANSACTIONS; ++j)
             wait_for[t->id][j] = 0;
         pthread_mutex_unlock(&global_lock);
@@ -372,4 +372,5 @@ int main(void)
     dump_store();
     return 0;
 }
+
 
