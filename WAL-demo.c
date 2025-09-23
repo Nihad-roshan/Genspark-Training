@@ -129,9 +129,9 @@ void recover_from_wal()
     int in_transaction = 0;
     int transaction_committed = 0;
 
-    while (fgets(line, sizeof(line), wal_fp))
+    while (fgets(line, sizeof(line), wal_fp))//Read WAL line by line.
     {
-        if (sscanf(line, "TRANSACTION %*d BEGIN") == 0)
+        if (sscanf(line, "TRANSACTION %*d BEGIN") == 0)//If the line is "TRANSACTION X BEGIN" → mark that a new transaction started. //%*d skips transaction ID.
         {
             in_transaction = 1;
             transaction_committed = 0;
