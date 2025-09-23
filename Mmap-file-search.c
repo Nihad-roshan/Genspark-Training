@@ -12,8 +12,8 @@
 #include<unistd.h>
 
 typedef struct {
-    size_t os_page_size;
-    size_t file_size;
+    int os_page_size;
+    int file_size;
 }MmapConfig;
 
 static void fatal(const char *msg)
@@ -24,7 +24,7 @@ static void fatal(const char *msg)
 
 static size_t get_os_page_size(void)
 {
-    long page_size = sysconf(_SC_PAGE_SIZE);
+    long page_size = sysconf(_SC_PAGE_SIZE);//Returns the memory page size of the system at runtime.
     if(page_size < 0)
     {
         return 4096;
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 
     const char *path = argv[1];
     const char *keyword = argv[2];
-    size_t keyword_len = strlen(keyword);
+    int keyword_len = strlen(keyword);
 
     if(keyword_len == 0)
     {
@@ -116,4 +116,11 @@ int main(int argc, char **argv)
 
     return 0;
 }
+/*
+Opens a file.
+Maps it into memory (mmap) so that the file contents can be accessed like a normal array.
+Searches for all occurrences of a given keyword in the file.
+Prints offsets where the keyword occurs and the total count.
+*/
+
 
