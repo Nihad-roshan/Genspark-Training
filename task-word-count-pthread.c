@@ -27,7 +27,7 @@ void *worker_thread(void *arg)
 
     for (size_t i = warg->start; i < warg->end; i++)
     {
-        if (isspace((unsigned char)warg->data[i]))
+        if (isspace((unsigned char)warg->data[i]))//isspace() checks if the current character is a space, tab, newline, etc.
         {
             if (in_word)
             {
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
     struct stat st;
     if (stat(argv[1], &st) != 0)
-    {
+    {//stat() = “go ask the OS how big this file is and other details.
         perror("stat");
         exit(1);
     }
@@ -116,3 +116,4 @@ int main(int argc, char *argv[])
     pthread_mutex_destroy(&count_mutex);
     return 0;
 }
+
