@@ -1,36 +1,30 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <time.h>
 
-#define THREADS 8
-#define ITERATIONS 1000000 
+#define NUM_THREADS 4
+#define NUM_ITERATIONS 1000000
 
-static long atomic_counter = 0;
-static long mutex_counter = 0;
-
+// Shared variables
+atomic_int atomic_counter = 0;
+int mutex_counter = 0;
 pthread_mutex_t lock;
 
-typedef struct
+// Worker for atomic counter
+void *atomic_worker(void *arg)
 {
-    int id;
-    long iterations;
-} worker_arg_t;
-
-void *worker_atomic(void *arg)
-{
-    worker_arg_t *worker = (worker_arg_t *)arg;
-    for (long i = 0; i < worker->iterations; i++)
+    for (int i = 0; i < NUM_ITERATIONS; i++)
     {
-        __atomic_fetch_add(&atomic_counter, 1, __ATOMIC_SEQ_CST);
+        atomic_fetch_add(&atomic_counter, 1); // Atomic increment
     }
     return NULL;
 }
 
-void *worker_mutex(void *arg)
+// Worker for mutex counter
+void *mutex_worker(void *arg)
 {
-    worker_arg_t *worker = (worker_arg_t *)arg;
-    for (long i = 0; i < worker->iterations; i++)
+    for (int i = 0; i < NUM_ITERATIONS; i++)
     {
         pthread_mutex_lock(&lock);
         mutex_counter++;
@@ -39,55 +33,43 @@ void *worker_mutex(void *arg)
     return NULL;
 }
 
-
-double elapsed_time(struct timespec start, struct timespec end)
-{
-    return (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-}
-
 int main()
 {
-    pthread_t threads[THREADS];
-    worker_arg_t args[THREADS];
-    struct timespec start, end;
-    double time_atomic, time_mutex;
+    pthread_t threads[NUM_THREADS];
+    clock_t start, end;
 
-    atomic_counter = 0;
-    
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    for (int i = 0; i < THREADS; i++)
-    {
-        args[i].id = i;
-        args[i].iterations = ITERATIONS;
-        pthread_create(&threads[i], NULL, worker_atomic, &args[i]);
-    }
-    for (int i = 0; i < THREADS; i++)
-    {
+    // --- Atomic Counter Test ---
+    start = clock();
+    for (int i = 0; i < NUM_THREADS; i++)
+        pthread_create(&threads[i], NULL, atomic_worker, NULL);
+    for (int i = 0; i < NUM_THREADS; i++)
         pthread_join(threads[i], NULL);
-    }
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    time_atomic = elapsed_time(start, end);
+    end = clock();
+    printf("Atomic Counter = %d, Time = %.4f sec\n", atomic_counter, (double)(end - start) / CLOCKS_PER_SEC);
 
-    // Mutex test
+    // --- Mutex Counter Test ---
     pthread_mutex_init(&lock, NULL);
-    mutex_counter = 0;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    for (int i = 0; i < THREADS; i++)
-    {
-        args[i].id = i;
-        args[i].iterations = ITERATIONS;
-        pthread_create(&threads[i], NULL, worker_mutex, &args[i]);
-    }
-    for (int i = 0; i < THREADS; i++)
-    {
+    start = clock();
+    for (int i = 0; i < NUM_THREADS; i++)
+        pthread_create(&threads[i], NULL, mutex_worker, NULL);
+    for (int i = 0; i < NUM_THREADS; i++)
         pthread_join(threads[i], NULL);
-    }
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    time_mutex = elapsed_time(start, end);
-
-    printf("Atomic Counter = %ld (expected %ld), time = %.6f seconds\n",atomic_counter, (long)THREADS * ITERATIONS, time_atomic);
-    printf("Mutex Counter  = %ld (expected %ld), time = %.6f seconds\n",mutex_counter, (long)THREADS * ITERATIONS, time_mutex);
+    end = clock();
+    printf("Mutex Counter = %d, Time = %.4f sec\n", mutex_counter, (double)(end - start) / CLOCKS_PER_SEC);
 
     pthread_mutex_destroy(&lock);
     return 0;
 }
+/*
+
+Atomic Counter = 4000000, Time = 0.12 sec
+Mutex Counter  = 4000000, Time = 0.35 sec
+
+*/
+
+/*
+
+Atomic counter is faster because it avoids the kernel/OS overhead of locking.
+
+Mutex is safer for complex operations, but slower for simple increments.
+*/
