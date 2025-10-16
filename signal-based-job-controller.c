@@ -19,7 +19,6 @@ void child_work(int id)
     }
 }
 
-// ------------------ SIGNAL HANDLER FOR PARENT ------------------
 void handle_signal(int sig)
 {
     if (sig == SIGINT)
@@ -99,3 +98,4 @@ int main()
 
     return 0;
 }
+
