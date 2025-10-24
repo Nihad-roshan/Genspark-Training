@@ -1,6 +1,6 @@
-Interpreting BPFTrace Output for Process ebfp
+# Interpreting BPFTrace Output for Process ebfp
 
-# You can trace system calls made by your program (ebfp) using BPFTrace to monitor how frequently it opens and closes files.
+You can trace system calls made by your program (ebfp) using BPFTrace to monitor how frequently it opens and closes files.
 
 # Command Used
 
@@ -24,11 +24,13 @@ END
 @[ebfp, open]: 7
 @[ebfp, close]: 7
 
-# Interpretation
-Observation	Meaning	Inference
-open = 7	The process ebfp invoked the openat() system call 7 times.	Indicates that the program opened 7 files or file descriptors during execution.
-close = 7	The process closed 7 file descriptors.	Every opened file or socket was properly closed — clean resource management.
-open = close	Equal counts of open and close syscalls.	Suggests no file descriptor leaks and balanced resource handling.
+##  Interpretation
+
+| Observation | Meaning | Inference |
+|--------------|----------|------------|
+| **open = 7** | The process `ebfp` invoked the `openat()` system call 7 times. | Indicates that the program opened 7 files or file descriptors during execution. |
+| **close = 7** | The process closed 7 file descriptors. | Every opened file or socket was properly closed — clean resource management. |
+| **open = close** | Equal counts of open and close syscalls. | Suggests no file descriptor leaks and balanced resource handling. |
 
 # Inference Summary
 
@@ -39,20 +41,26 @@ open = close	Equal counts of open and close syscalls.	Suggests no file descripto
 
 # Syscall Bottleneck Interpretation Summary
 
-Syscall	When Count is High	Likely System State	Possible Fix / Optimization
-open() / openat()	Frequent open operations	Repeated file or log access	Cache file descriptors, reuse handles
-close()	Frequent closes	Short-lived file usage	Keep files open longer if possible
-read()	Many small reads	I/O-bound workload	Use buffered or batched reads
-write()	Many small writes	High syscall overhead	Batch or buffer writes
-fsync()	Frequent flushes	Disk I/O bottleneck	Use delayed writes or async I/O
+## ⚡ Syscall Bottleneck Interpretation Summary
 
-# How to Interpret Patterns
-Pattern	Meaning	System State	Fix / Action
-open >> close	Files opened but not closed	Potential resource leak	Ensure all opened FDs are closed
-close >> open	Closing unused descriptors	Unnecessary system overhead	Review file handling logic
-open = close (balanced)	Proper file lifecycle	Clean and efficient I/O	No change needed
-All syscall counts low	Idle or small workload	Underutilized	Increase test input or workload to profile more deeply
-High open/close frequency	Repeated short operations	Descriptor churn	Implement file descriptor caching or pooling
+| Syscall | When Count is High | Likely System State | Possible Fix / Optimization |
+|----------|-------------------|---------------------|-----------------------------|
+| **open() / openat()** | Frequent open operations | Repeated file or log access | Cache file descriptors, reuse handles |
+| **close()** | Frequent closes | Short-lived file usage | Keep files open longer if possible |
+| **read()** | Many small reads | I/O-bound workload | Use buffered or batched reads |
+| **write()** | Many small writes | High syscall overhead | Batch or buffer writes |
+| **fsync()** | Frequent flushes | Disk I/O bottleneck | Use delayed writes or async I/O |
+
+
+## 📈 How to Interpret Patterns
+
+| Pattern                    | Meaning                       | System State                   | Fix / Action                                         |
+|-----------------------------|-------------------------------|--------------------------------|-----------------------------------------------------|
+| `read() ≫ write()`          | Server mostly waiting for input | I/O wait / underutilized      | Use non-blocking reads, increase client concurrency |
+| `write() ≫ read()`          | Writes dominate               | Output heavy / backpressure possible | Buffer writes, apply flow control             |
+| `accept()` and `close()` both high | Frequent short connections     | Connection churn               | Reuse connections, enable persistent sessions      |
+| All syscall counts very high | Too many kernel transitions   | Kernel-bound workload          | Batch I/O, use asynchronous operations            |
+| Low syscall counts overall   | Idle or lightly loaded system | Underutilized                  | Increase request rate to stress test properly      |
 
 # Summary
 
@@ -63,5 +71,6 @@ Process Traced: ebfp
 Key Finding: Balanced open/close syscalls (7 each)
 
 Performance State: Light workload, efficient resource handling
+
 
 Optimization Potential: Minimal — already well-managed
