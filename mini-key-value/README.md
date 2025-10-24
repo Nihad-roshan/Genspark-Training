@@ -21,7 +21,7 @@ README.md — Documentation and performance analysis
 # How to Build and Run
 
 ## Compile:
-gcc server.c -o server -lpthread
+gcc server.c -o server -lpthread                                                                                              
 gcc client.c -o client
 
 ## Run the Server:
@@ -79,4 +79,5 @@ System      | Context switch cost | Batch syscalls       |
 - Replace pthread_create() with thread pool
 - Use epoll() for event-driven concurrency
 - Add client logging
+
 - Implement DELETE and LIST commands
