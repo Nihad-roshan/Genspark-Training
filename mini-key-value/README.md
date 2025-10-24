@@ -44,13 +44,13 @@ Example issues:
 * connect(): 200 calls
 
 # Optimization Strategies
-Problem                 | Cause                            | Fix
+Problem                  | Cause                           | Fix
 -----------------------------------------------------------------------------------------------
-Too many read/write     | Small unbuffered I/O             | Use buffered or batched I/O      |
-Too many open/close     | Repeated file access             | Cache and reuse file descriptors |
-Too many connect        | Short-lived sessions             | Use persistent connections       |
-Too many pthread_create | One thread per client            | Use a thread pool or epoll       |
-High latency            | Frequent user↔kernel transitions | Minimize syscall count           |
+Too many read/write      | Small unbuffered I/O               | Use buffered or batched I/O      |
+Too many open/close      | Repeated file access               | Cache and reuse file descriptors |
+Too many connect         | Short-lived sessions               | Use persistent connections       |
+Too many pthread_create  | One thread per client              | Use a thread pool or epoll       |
+High latency             | Frequent user↔kernel transitions   | Minimize syscall count           |
 
 # Optimization Techniques
 * Buffer I/O: Use fdopen() and standard I/O functions.
@@ -81,3 +81,4 @@ System      | Context switch cost | Batch syscalls       |
 - Add client logging
 
 - Implement DELETE and LIST commands
+
