@@ -2,9 +2,12 @@
 
 You can trace system calls made by your program (ebfp) using BPFTrace to monitor how frequently it opens and closes files.
 
-# Command Used
+##  Command Used
 
-sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat/comm == "ebfp"/
+```bash
+sudo bpftrace -e '
+tracepoint:syscalls:sys_enter_openat
+/comm == "ebfp"/
 {
     @[comm, "open"] = count();
 }
@@ -18,11 +21,14 @@ END
     printf("\n=== Syscall Frequency for process: ebfp ===\n");
     print(@);
 }'
+````
 
 # Example Output
+```bash
 - Syscall Frequency for process: ebfp 
 @[ebfp, open]: 7
 @[ebfp, close]: 7
+````
 
 ##  Interpretation
 
@@ -41,8 +47,6 @@ END
 
 # Syscall Bottleneck Interpretation Summary
 
-## ⚡ Syscall Bottleneck Interpretation Summary
-
 | Syscall | When Count is High | Likely System State | Possible Fix / Optimization |
 |----------|-------------------|---------------------|-----------------------------|
 | **open() / openat()** | Frequent open operations | Repeated file or log access | Cache file descriptors, reuse handles |
@@ -52,7 +56,7 @@ END
 | **fsync()** | Frequent flushes | Disk I/O bottleneck | Use delayed writes or async I/O |
 
 
-## 📈 How to Interpret Patterns
+# How to Interpret Patterns
 
 | Pattern                    | Meaning                       | System State                   | Fix / Action                                         |
 |-----------------------------|-------------------------------|--------------------------------|-----------------------------------------------------|
@@ -62,15 +66,4 @@ END
 | All syscall counts very high | Too many kernel transitions   | Kernel-bound workload          | Batch I/O, use asynchronous operations            |
 | Low syscall counts overall   | Idle or lightly loaded system | Underutilized                  | Increase request rate to stress test properly      |
 
-# Summary
 
-Tool Used: BPFTrace
-
-Process Traced: ebfp
-
-Key Finding: Balanced open/close syscalls (7 each)
-
-Performance State: Light workload, efficient resource handling
-
-
-Optimization Potential: Minimal — already well-managed
