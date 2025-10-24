@@ -11,8 +11,9 @@ int main()
         {
             return 1;
         }
-        write(fd,"Hello",6);
+        // write(fd,"Hello",6);
         close(fd);
     }
     return 0;
 }
+
