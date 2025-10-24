@@ -56,14 +56,6 @@ END
 | **fsync()** | Frequent flushes | Disk I/O bottleneck | Use delayed writes or async I/O |
 
 
-# How to Interpret Patterns
 
-| Pattern                    | Meaning                       | System State                   | Fix / Action                                         |
-|-----------------------------|-------------------------------|--------------------------------|-----------------------------------------------------|
-| `read() ≫ write()`          | Server mostly waiting for input | I/O wait / underutilized      | Use non-blocking reads, increase client concurrency |
-| `write() ≫ read()`          | Writes dominate               | Output heavy / backpressure possible | Buffer writes, apply flow control             |
-| `accept()` and `close()` both high | Frequent short connections     | Connection churn               | Reuse connections, enable persistent sessions      |
-| All syscall counts very high | Too many kernel transitions   | Kernel-bound workload          | Batch I/O, use asynchronous operations            |
-| Low syscall counts overall   | Idle or lightly loaded system | Underutilized                  | Increase request rate to stress test properly      |
 
 
