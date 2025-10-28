@@ -97,9 +97,10 @@ int main()
     printf("Evaluated Result: %d\n", result);
 
     if (result)
-        printf("✅ TRUE\n");
+        printf("TRUE\n");
     else
-        printf("❌ FALSE\n");
+        printf("FALSE\n");
 
     return 0;
 }
+
