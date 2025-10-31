@@ -11,12 +11,12 @@ This project modularizes the key-value store by moving its core logic (`kv_get`,
 | `kvstore_functions.c` | Contains the actual key-value store logic (SET/GET handling). Compiled into a shared library `.so`. |
 | `kvstore.h` | Header file declaring `kv_get()` and `kv_set()` for use by the server. |
 | `server_main.c` | Server program that loads `libkvstore.so` dynamically at runtime using `dlopen()`/`dlsym()`. |
-| `client.c` | Optional client that connects to the server and sends commands. |
+| `client.c` | client that connects to the server and sends commands. |
 | `README.md` | This documentation. |
 
 ---
 
-## ⚙️ Step-by-Step Commands (Terminal)
+## Step-by-Step Commands (Terminal)
 
 ### 1. Create the Shared Library
 
@@ -29,26 +29,25 @@ gcc -shared -o libkvstore.so kvstore.o
 ```
 Explanation:
 
--fPIC → Generate position-independent code (required for shared libs).
+- fPIC → Generate position-independent code (required for shared libs).
 
--c → Compile only, do not link yet.
+- c → Compile only, do not link yet.
 
--shared → Create a .so (shared object).
+- shared → Create a .so (shared object).
 
 Output file: libkvstore.so
 
-2. Compile the Server (without linking to the library)
+### 2. Compile the Server (without linking to the library)
 
 The server doesn’t link to libkvstore.so at compile time — it loads it dynamically at runtime.
 ```bash
 
-gcc -o server server.c -ldl -lpthread
+gcc -o server server.c -ldl
 ```
-
 
 Explanation:
 
--ldl → Links with libdl, required for dlopen() / dlsym() / dlclose().
+- ldl → Links with libdl, required for dlopen() / dlsym() / dlclose().
 
 The server binary is independent of the .so file — it will look for it at runtime.
 
@@ -62,5 +61,6 @@ The server binary is independent of the .so file — it will look for it at runt
 | `dlsym(handle, "kv_get")` | Fetches a pointer to the function `kv_get()` from the library. |
 | `dlerror()` | Returns any error message from the dynamic loader. |
 | `dlclose(handle)` | Unloads the library when done. |
+
 
 ---
