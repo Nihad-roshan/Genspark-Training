@@ -23,8 +23,8 @@ This project modularizes the key-value store by moving its core logic (`kv_get`,
 Compile `kvstore.c` as a **position-independent shared library**:
 
 ```bash
-gcc -fPIC -c kvstore.c
-gcc -shared -o libkvstore.so kvstore.o
+gcc -fPIC -c kvstore_functions.c kvstore_functions.o
+gcc -shared -o libkvstore.so kvstore_functions.o
 
 ```
 Explanation:
@@ -42,7 +42,7 @@ Output file: libkvstore.so
 The server doesn’t link to libkvstore.so at compile time — it loads it dynamically at runtime.
 ```bash
 
-gcc -o server server.c -ldl
+gcc server.c -o server -ldl
 ```
 
 Explanation:
@@ -64,3 +64,4 @@ The server binary is independent of the .so file — it will look for it at runt
 
 
 ---
+
