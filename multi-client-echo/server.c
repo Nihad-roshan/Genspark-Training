@@ -71,11 +71,16 @@ int main(void)
 
     while (1)
     {
-        FD_ZERO(&readfds);
-        FD_ZERO(&writefds);
+        FD_ZERO(&readfds); 
+        FD_ZERO(&writefds);// watch client socket
 
-        FD_SET(listen_fd, &readfds);
+        FD_SET(listen_fd, &readfds);// watch listening socket
         max_fd = listen_fd;
+    /*
+    select() needs to know the highest numbered FD that you are watching.
+    Why?
+    because select scans from fd = 0 to fd = max_fd internally.
+    */
 
         // Add client fds to readfds
         for (int i = 0; i < MAX_CLIENTS; i++)
@@ -90,7 +95,7 @@ int main(void)
         }
 
         // Wait for activity
-        activity = select(max_fd + 1, &readfds, &writefds, NULL, NULL);
+        activity = select(max_fd + 1, &readfds, &writefds, NULL, NULL);//After select returns → the fd_sets contain ONLY the fds which are active.
 
         if (activity < 0 && errno != EINTR)
         {
@@ -167,4 +172,5 @@ int main(void)
  *  - Accepts multiple clients simultaneously.
  *  - Uses select() to multiplex sockets.
  *  - Handles non-blocking sockets for efficient I/O.
+
  */
