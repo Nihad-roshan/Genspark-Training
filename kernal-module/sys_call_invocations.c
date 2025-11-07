@@ -72,13 +72,3 @@ static void __exit demo_exit(void)
 module_init(demo_init);
 module_exit(demo_exit);
 
-// MAKEFILE
-/*
-obj-m += syslog_demo.o
-
-all:
-    $(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-
-clean:
-    $(MAKE) -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-*/
