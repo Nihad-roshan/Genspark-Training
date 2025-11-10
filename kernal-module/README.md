@@ -1,3 +1,6 @@
+![WhatsApp Image 2025-11-10 at 10 50 07 AM](https://github.com/user-attachments/assets/3cd43c9f-4349-4edf-bd41-ac6f5be0adb8)
+
+
 # Syscall Logging Kernel Module – via /proc
 
 This kernel module demonstrates how a normal user-space system call (write) enters kernel space, performs operations, and returns back to user space.
@@ -74,4 +77,5 @@ dmesg | tail
 
 We did NOT directly modify the syscall table (dangerous and not allowed on new kernels).
 Instead, we used /proc which is safe, recommended and standard.
+
 
